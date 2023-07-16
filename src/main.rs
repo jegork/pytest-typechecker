@@ -6,6 +6,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use anyhow::Result;
+use prettytable::{row, Table};
 use rustpython_ast::Expr::Attribute;
 use rustpython_ast::{Expr, Stmt, StmtFunctionDef};
 use rustpython_parser::ast::Suite;
@@ -47,6 +48,11 @@ struct FunctionArgs {
     state: ArgTypeState,
 }
 
+struct CheckedFunction {
+    name: String,
+    args: Vec<FunctionArgs>,
+}
+
 fn extract_type(el: &Option<Box<Expr>>) -> &str {
     match &el {
         None => return "None",
@@ -57,8 +63,6 @@ fn extract_type(el: &Option<Box<Expr>>) -> &str {
             }
             _ => {}
         },
-
-        _ => {}
     }
 
     return "undefined";
@@ -100,24 +104,30 @@ fn check_function_arg_types(
     checked_args
 }
 
-fn print_function_types_state(name: &String, states: Vec<FunctionArgs>) {
-    let valid_args: Vec<&FunctionArgs> = states
-        .iter()
-        .filter(|v| v.state == ArgTypeState::CorrectType)
-        .collect();
+fn pretty_print(funcs: Vec<CheckedFunction>) {
+    let mut table = Table::new();
 
-    if valid_args.len() == states.len() {
-        println!("Func: {} is correct", name);
-        return;
+    table.set_titles(row!["Name", "Invalid args"]);
+
+    for f in funcs {
+        let s: Vec<String> = f
+            .args
+            .iter()
+            .filter(|v| v.state != ArgTypeState::CorrectType)
+            .map(|v| {
+                return if v.state == ArgTypeState::IncorrectType {
+                    format!("{}: incorrect type", v.name)
+                } else {
+                    format!("{}: missing type", v.name)
+                };
+            })
+            .collect();
+        table.add_row(row![f.name, s.join("\n")]);
+        // }
     }
 
-    println!("Func {} is incorrect", name);
-    for arg in states {
-        if arg.state == ArgTypeState::MissingType {
-            println!("Arg: {} is missing type", arg.name);
-        } else if arg.state == ArgTypeState::IncorrectType {
-            println!("Arg {} is incorrect", arg.name);
-        }
+    if table.len() > 0 {
+        table.printstd();
     }
 }
 
@@ -149,8 +159,15 @@ fn main() -> Result<(), ()> {
         }
     }
 
-    for f in test_cases {
-        print_function_types_state(&f.0, check_function_arg_types(&f.1, &fixtures))
-    }
+    pretty_print(
+        test_cases
+            .iter()
+            .map(|v| CheckedFunction {
+                name: String::from(v.0),
+                args: check_function_arg_types(&v.1, &fixtures),
+            })
+            .collect(),
+    );
+
     Ok(())
 }

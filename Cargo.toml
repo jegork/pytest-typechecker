@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.72"
 clap = { version = "4.3.12", features = ["derive"] }
+prettytable-rs = "0.10.0"
 ruff_dev = { git = "https://github.com/astral-sh/ruff", version = "0.0.0" }
 rustpython-ast = { git = "https://github.com/astral-sh/RustPython-Parser.git", rev = "c174bbf1f29527edd43d432326327f16f47ab9e0" , default-features = false, features = ["num-bigint"]}
 rustpython-format = { git = "https://github.com/astral-sh/RustPython-Parser.git", rev = "c174bbf1f29527edd43d432326327f16f47ab9e0", default-features = false, features = ["num-bigint"] }

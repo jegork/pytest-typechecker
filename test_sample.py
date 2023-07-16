@@ -11,5 +11,5 @@ def sample_string_2(sample_string) -> str:
     return sample_string + ' world'
 
 
-def test_hello(sample_string_2):
+def test_hello(sample_string_2, sample_string: int):
     assert sample_string_2 == 'hello world'
