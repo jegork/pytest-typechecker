@@ -1,9 +1,11 @@
 //! Print the AST for a given Python file.
 #![allow(clippy::print_stdout, clippy::print_stderr)]
 
+use clap::Parser;
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
+use std::process::exit;
 
 use anyhow::Result;
 use prettytable::{row, Table};
@@ -123,18 +125,34 @@ fn pretty_print(funcs: Vec<CheckedFunction>) {
             })
             .collect();
         table.add_row(row![f.name, s.join("\n")]);
-        // }
     }
 
     if table.len() > 0 {
         table.printstd();
+        exit(1);
+    } else {
+        println!("All types are correct!");
     }
 }
 
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// Python pytest file for which to check fixture types.
+    #[arg(required = true)]
+    file: PathBuf,
+}
+
 fn main() -> Result<(), ()> {
-    let file = PathBuf::from("test_sample.py");
-    let contents = fs::read_to_string(&file).expect("Must be a file");
-    let mut python_ast = Suite::parse(&contents, &file.to_string_lossy()).expect("Error");
+    let args = Args::parse();
+
+    if args.file.is_file() == false {
+        println!("File does not exist!");
+        exit(1);
+    }
+
+    let contents = fs::read_to_string(&args.file).expect("Must be a file");
+    let mut python_ast = Suite::parse(&contents, &args.file.to_string_lossy()).expect("Error");
 
     let mut fixtures = HashMap::new();
     let mut test_cases = HashMap::new();
