@@ -1,139 +1,23 @@
 //! Print the AST for a given Python file.
 #![allow(clippy::print_stdout, clippy::print_stderr)]
 
+mod fixture;
+mod function;
+mod print;
+
 use clap::Parser;
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 use std::process::exit;
 
+use crate::fixture::is_fixture;
+use crate::function::{check_function_arg_types, CheckedFunction};
+use crate::print::pretty_print;
 use anyhow::Result;
-use prettytable::{row, Table};
-use rustpython_ast::Expr::Attribute;
-use rustpython_ast::{Expr, Stmt, StmtFunctionDef};
+use rustpython_ast::Stmt;
 use rustpython_parser::ast::Suite;
 use rustpython_parser::Parse;
-
-fn is_fixture(func: &StmtFunctionDef) -> bool {
-    if func.decorator_list.len() > 0 {
-        for dec in &func.decorator_list {
-            match &dec.expression {
-                Expr::Call(call) => match call.func.as_ref() {
-                    Attribute(atr) => {
-                        let name = atr.attr.as_str();
-
-                        if name == "fixture" {
-                            return true;
-                        }
-                    }
-                    _ => {}
-                },
-
-                _ => {}
-            }
-        }
-    }
-
-    false
-}
-
-#[derive(Debug, PartialEq, Eq)]
-enum ArgTypeState {
-    MissingType,
-    IncorrectType,
-    CorrectType,
-}
-
-#[derive(Debug)]
-struct FunctionArgs {
-    name: String,
-    state: ArgTypeState,
-}
-
-struct CheckedFunction {
-    name: String,
-    args: Vec<FunctionArgs>,
-}
-
-fn extract_type(el: &Option<Box<Expr>>) -> &str {
-    match &el {
-        None => return "None",
-
-        Some(t) => match t.as_ref() {
-            Expr::Name(expr_name) => {
-                return expr_name.id.as_str();
-            }
-            _ => {}
-        },
-    }
-
-    return "undefined";
-}
-
-fn check_function_arg_types(
-    func: &StmtFunctionDef,
-    fixtures: &HashMap<String, &mut StmtFunctionDef>,
-) -> Vec<FunctionArgs> {
-    let mut checked_args = Vec::new();
-
-    for el in func.args.args.iter() {
-        let arg_name = el.def.arg.as_str();
-
-        match fixtures.get(arg_name) {
-            Some(fixture) => {
-                if el.def.annotation == None {
-                    checked_args.push(FunctionArgs {
-                        name: String::from(arg_name),
-                        state: ArgTypeState::MissingType,
-                    })
-                } else if extract_type(&el.def.annotation) != extract_type(&fixture.returns) {
-                    checked_args.push(FunctionArgs {
-                        name: String::from(arg_name),
-                        state: ArgTypeState::IncorrectType,
-                    })
-                } else {
-                    checked_args.push(FunctionArgs {
-                        name: String::from(arg_name),
-                        state: ArgTypeState::CorrectType,
-                    })
-                }
-            }
-
-            None => {}
-        }
-    }
-
-    checked_args
-}
-
-fn pretty_print(funcs: Vec<CheckedFunction>) {
-    let mut table = Table::new();
-
-    table.set_titles(row!["Name", "Invalid args"]);
-
-    for f in funcs {
-        let s: Vec<String> = f
-            .args
-            .iter()
-            .filter(|v| v.state != ArgTypeState::CorrectType)
-            .map(|v| {
-                return if v.state == ArgTypeState::IncorrectType {
-                    format!("{}: incorrect type", v.name)
-                } else {
-                    format!("{}: missing type", v.name)
-                };
-            })
-            .collect();
-        table.add_row(row![f.name, s.join("\n")]);
-    }
-
-    if table.len() > 0 {
-        table.printstd();
-        exit(1);
-    } else {
-        println!("All types are correct!");
-    }
-}
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
