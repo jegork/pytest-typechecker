@@ -12,7 +12,7 @@ use std::path::PathBuf;
 use std::process::exit;
 
 use crate::fixture::is_fixture;
-use crate::function::{check_function_arg_types, CheckedFunction};
+use crate::function::{check_function_arg_types};
 use crate::print::pretty_print;
 use anyhow::Result;
 use rustpython_ast::Stmt;
@@ -64,10 +64,7 @@ fn main() -> Result<(), ()> {
     pretty_print(
         test_cases
             .iter()
-            .map(|v| CheckedFunction {
-                name: String::from(v.0),
-                args: check_function_arg_types(&v.1, &fixtures),
-            })
+            .map(|v| check_function_arg_types(&v.1, &fixtures))
             .collect(),
     );
 

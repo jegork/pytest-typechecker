@@ -11,12 +11,19 @@ pub fn pretty_print(funcs: Vec<CheckedFunction>) {
         let s: Vec<String> = f
             .args
             .iter()
-            .filter(|v| v.state != ArgTypeState::CorrectType)
+            .filter(|v| match v {
+                ArgTypeState::CorrectType { .. } => false,
+                _ => true,
+            })
             .map(|v| {
-                return if v.state == ArgTypeState::IncorrectType {
-                    format!("{}: incorrect type", v.name)
-                } else {
-                    format!("{}: missing type", v.name)
+                return match v {
+                    ArgTypeState::IncorrectType {
+                        name,
+                        provided,
+                        expected,
+                    } => format!("{}: expected {}, provided: {}", name, expected, provided),
+                    ArgTypeState::MissingType { name } => format!("{}: missing type", name),
+                    _ => String::from(""),
                 };
             })
             .collect();
