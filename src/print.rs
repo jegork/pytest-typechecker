@@ -23,6 +23,7 @@ pub fn pretty_print(funcs: Vec<CheckedFunction>) {
                         expected,
                     } => format!("{}: expected {}, provided: {}", name, expected, provided),
                     ArgTypeState::MissingType { name } => format!("{}: missing type", name),
+                    ArgTypeState::Error { name, msg } => format!("{}: {}", name, msg.clone()),
                     _ => String::from(""),
                 };
             })

@@ -12,7 +12,7 @@ use std::path::PathBuf;
 use std::process::exit;
 
 use crate::fixture::is_fixture;
-use crate::function::{check_function_arg_types};
+use crate::function::check_function_arg_types;
 use crate::print::pretty_print;
 use anyhow::Result;
 use rustpython_ast::Stmt;
