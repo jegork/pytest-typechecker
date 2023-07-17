@@ -1,8 +1,9 @@
+use std::ffi::OsStr;
 use crate::function::{ArgTypeState, CheckedFunction};
 use prettytable::{row, Table};
 use std::process::exit;
 
-pub fn pretty_print(funcs: Vec<CheckedFunction>) {
+pub fn pretty_print(filename: &OsStr, funcs: Vec<CheckedFunction>) {
     let mut table = Table::new();
 
     table.set_titles(row!["Name", "Invalid args"]);
@@ -32,9 +33,10 @@ pub fn pretty_print(funcs: Vec<CheckedFunction>) {
     }
 
     if table.len() > 0 {
+        println!("Errors found in {}:", filename.to_str().unwrap());
         table.printstd();
-        exit(1);
+        println!();
     } else {
-        println!("All types are correct!");
+        println!("File {} is correct!", filename.to_str().unwrap());
     }
 }

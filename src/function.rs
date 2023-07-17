@@ -1,4 +1,4 @@
-use rustpython_ast::Expr::{Name};
+use rustpython_ast::Expr::Name;
 use rustpython_ast::{Expr, StmtFunctionDef};
 use std::collections::HashMap;
 
