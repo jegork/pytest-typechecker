@@ -1,6 +1,6 @@
-use std::ffi::OsStr;
 use crate::function::{ArgTypeState, CheckedFunction};
 use prettytable::{row, Table};
+use std::ffi::OsStr;
 use std::process::exit;
 
 pub fn pretty_print(filename: &OsStr, funcs: Vec<CheckedFunction>) {

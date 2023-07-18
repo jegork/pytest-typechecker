@@ -8,17 +8,17 @@ mod print;
 use clap::Parser;
 use std::collections::HashMap;
 use std::fs;
-use std::iter::Product;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::exit;
 
 use crate::fixture::is_fixture;
 use crate::function::check_function_arg_types;
 use crate::print::pretty_print;
 use anyhow::Result;
-use rustpython_ast::{Stmt};
+use rustpython_ast::Stmt;
 use rustpython_parser::ast::Suite;
 use rustpython_parser::Parse;
+use walkdir::WalkDir;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -70,35 +70,52 @@ fn parse_file(file: PathBuf) -> Result<()> {
     Ok(())
 }
 
-fn parse_dir(file: PathBuf, recursive: bool) -> Result<()> {
-    for entry in fs::read_dir(file)? {
-        let entry = entry?;
-        let entry_path = entry.path();
-
-        if entry_path.is_file() {
-            parse_file(entry_path)?
-        } else if entry_path.is_dir() && recursive == true {
-            return parse_dir(entry_path, recursive);
+fn get_files_list(provided: Vec<PathBuf>, recursive: bool) -> Result<Vec<PathBuf>> {
+    let mut total = Vec::new();
+    for f in provided {
+        if f.exists() == false {
+            println!("File {} does not exist!", f.display());
+            exit(1);
         }
+
+        if f.is_file() {
+            total.push(f.clone());
+        } else if f.is_dir() {
+            if recursive == false {
+                for entry in fs::read_dir(f)? {
+                    let entry = entry?;
+                    let entry_path = entry.path();
+
+                    if entry_path.is_file() {
+                        total.push(entry_path);
+                    }
+                }
+            } else {
+                for entry in WalkDir::new(f).max_depth(10) {
+                    let entry = entry?;
+                    let entry_path: &Path = entry.path();
+
+                    if entry_path.is_file() {
+                        total.push(entry_path.to_path_buf());
+                    }
+                }
+            }
+        }
+
     }
 
-    Ok(())
+    total.sort_unstable();
+    total.dedup();
+
+    return Ok(total);
 }
 
 fn main() -> Result<()> {
     let args = Args::parse();
 
-    for file in args.file {
-        if file.is_dir() {
-            parse_dir(file, args.recursive.clone())?
-        } else if file.is_file() {
-            parse_file(file)?
-        } else {
-            println!("File {} does not exist!", file.to_str().unwrap());
-            exit(1);
-        }
+    for file in get_files_list(args.file, args.recursive)? {
+        parse_file(file)?
     }
-
 
     Ok(())
 }
