@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.72"
+bytecount = "0.6.3"
 clap = { version = "4.3.12", features = ["derive"] }
 prettytable-rs = "0.10.0"
 ruff_dev = { git = "https://github.com/astral-sh/ruff", version = "0.0.0" }

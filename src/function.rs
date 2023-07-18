@@ -1,5 +1,5 @@
 use rustpython_ast::Expr::Name;
-use rustpython_ast::{Expr, StmtFunctionDef};
+use rustpython_ast::{Expr, Ranged, StmtFunctionDef};
 use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -11,6 +11,7 @@ pub enum ArgTypeState {
         name: String,
         expected: String,
         provided: String,
+        line: usize
     },
     CorrectType {
         name: String,
@@ -18,12 +19,17 @@ pub enum ArgTypeState {
     Error {
         name: String,
         msg: String,
+        line: usize
     },
 }
 
 pub struct CheckedFunction {
     pub(crate) name: String,
     pub(crate) args: Vec<ArgTypeState>,
+}
+
+fn get_line_number(value: &String, at: usize) -> usize {
+    return bytecount::count(&value[..at].as_bytes(), b'\n') + 1;
 }
 
 fn extract_type(el: &Expr) -> Option<String> {
@@ -57,6 +63,7 @@ fn extract_type(el: &Expr) -> Option<String> {
 }
 
 pub fn check_function_arg_types(
+    file_contents: &String,
     func: &StmtFunctionDef,
     fixtures: &HashMap<String, &mut StmtFunctionDef>,
 ) -> CheckedFunction {
@@ -80,6 +87,7 @@ pub fn check_function_arg_types(
                                         name: String::from(arg_name),
                                         expected: expected_value,
                                         provided: provided_value,
+                                        line: get_line_number(file_contents, annotation_value.start().to_usize())
                                     })
                                 } else {
                                     Some(ArgTypeState::CorrectType {
@@ -90,9 +98,10 @@ pub fn check_function_arg_types(
                             _ => panic!("Unsupported type"),
                         }
                     }
-                    (None, Some(_)) => Some(ArgTypeState::Error {
+                    (None, Some(annotation_value)) => Some(ArgTypeState::Error {
                         msg: format!("Fixture {} is missing return type!", fixture.name.as_str()),
                         name: String::from(arg_name),
+                        line: get_line_number(file_contents, annotation_value.start().to_usize())
                     }),
 
                     (Some(_), None) => Some(ArgTypeState::MissingType {

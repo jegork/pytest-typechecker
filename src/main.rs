@@ -63,7 +63,7 @@ fn parse_file(file: PathBuf) -> Result<()> {
         file.file_name().unwrap(),
         test_cases
             .iter()
-            .map(|v| check_function_arg_types(&v.1, &fixtures))
+            .map(|v| check_function_arg_types(&contents, &v.1, &fixtures))
             .collect(),
     );
 

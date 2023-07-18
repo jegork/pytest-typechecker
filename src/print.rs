@@ -22,9 +22,10 @@ pub fn pretty_print(filename: &OsStr, funcs: Vec<CheckedFunction>) {
                         name,
                         provided,
                         expected,
-                    } => format!("{}: expected {}, provided: {}", name, expected, provided),
+                        line
+                    } => format!("{} (line {}): expected {}, provided: {}", name, line, expected, provided),
                     ArgTypeState::MissingType { name } => format!("{}: missing type", name),
-                    ArgTypeState::Error { name, msg } => format!("{}: {}", name, msg.clone()),
+                    ArgTypeState::Error { name, msg, line } => format!("{} (line {}): {}", name, line, msg.clone()),
                     _ => String::from(""),
                 };
             })
