@@ -8,9 +8,10 @@ anyhow = "1.0.72"
 bytecount = "0.6.3"
 clap = { version = "4.3.12", features = ["derive"] }
 prettytable-rs = "0.10.0"
-ruff_dev = { git = "https://github.com/astral-sh/ruff", version = "0.0.0" }
-rustpython-ast = { git = "https://github.com/astral-sh/RustPython-Parser.git", rev = "c174bbf1f29527edd43d432326327f16f47ab9e0" , default-features = false, features = ["num-bigint"]}
-rustpython-format = { git = "https://github.com/astral-sh/RustPython-Parser.git", rev = "c174bbf1f29527edd43d432326327f16f47ab9e0", default-features = false, features = ["num-bigint"] }
-rustpython-literal = { git = "https://github.com/astral-sh/RustPython-Parser.git", rev = "c174bbf1f29527edd43d432326327f16f47ab9e0", default-features = false }
-rustpython-parser = { git = "https://github.com/astral-sh/RustPython-Parser.git", rev = "c174bbf1f29527edd43d432326327f16f47ab9e0" , default-features = false, features = ["full-lexer", "num-bigint"] }
+rustpython-ast = "0.3.0"
+rustpython-format = "0.3.0"
+rustpython-literal = "0.3.0"
+rustpython-parser = "0.3.0"
+rustpython-parser-core = "0.3.0"
+rustpython-parser-vendored = "0.3.0"
 walkdir = "2.3.3"
