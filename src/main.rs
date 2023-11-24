@@ -2,10 +2,12 @@
 #![allow(clippy::print_stdout, clippy::print_stderr)]
 
 mod files;
-mod parser;
+mod functions;
+mod nodes;
+mod analysis_error;
+use crate::files::check_file;
 use clap::Parser;
-use files::{get_files_list, read_file, PythonFile};
-use parser::parse_python_files;
+use files::{get_files_list, read_file, parsed_python_file::ParsedPythonFile, python_file::PythonFile};
 use std::path::PathBuf;
 
 use anyhow::Result;
@@ -22,14 +24,24 @@ struct Args {
     recursive: bool,
 }
 
-
 fn main() -> Result<()> {
     let args = Args::parse();
 
-    let files: Vec<PythonFile> = get_files_list(args.file, args.recursive).iter().map(read_file).collect();
+    let files: Vec<ParsedPythonFile> = get_files_list(args.file, args.recursive)
+        .iter()
+        .map(read_file)
+        .map(PythonFile::parse)
+        .map(|f| {
+            let errors = check_file(&f);
+            ParsedPythonFile { errors, ..f }
+        })
+        .collect();
 
-    let parsed = parse_python_files(files);
+    for file in files {
+        println!("File: {}", &file.file.filename);
+        println!("Errors: {:#?}", check_file(&file));
+        println!();
+    }
 
-    parsed[1].print_ast();
     Ok(())
 }
