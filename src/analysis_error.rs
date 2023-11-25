@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub enum AnalysisError {
     FixtureMissingReturnType {
         fixture_name: String,

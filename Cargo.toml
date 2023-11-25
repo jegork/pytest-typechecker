@@ -3,6 +3,14 @@ name = "pytest_typechecker"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "pytest_typechecker"
+path = "src/main.rs"
+
+[lib]
+name = "pytest_typechecker"
+path = "src/lib.rs"
+
 [dependencies]
 anyhow = "1.0.72"
 bytecount = "0.6.3"
@@ -14,4 +22,5 @@ rustpython-literal = "0.3.0"
 rustpython-parser = "0.3.0"
 rustpython-parser-core = "0.3.0"
 rustpython-parser-vendored = "0.3.0"
+test-case = "3.3.1"
 walkdir = "2.3.3"

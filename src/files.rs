@@ -1,11 +1,10 @@
 use crate::analysis_error::AnalysisError;
+use parsed_python_file::ParsedPythonFile;
+use python_file::PythonFile;
 use rustpython_ast::{ArgWithDefault, Expr};
 use std::{fs, path::PathBuf};
-use python_file::PythonFile;
-use parsed_python_file::ParsedPythonFile;
 pub mod parsed_python_file;
 pub mod python_file;
-
 
 fn get_files_in_a_directory(dir: PathBuf) -> Vec<PathBuf> {
     let mut files = Vec::new();
@@ -133,7 +132,7 @@ mod tests {
             filenames,
             vec![
                 "./python-examples/test_sample.py",
-                "./python-examples/folder/test_1.py",
+                "./python-examples/folder/test_empty.py",
                 "./python-examples/test_sample_complex.py",
             ]
         )
