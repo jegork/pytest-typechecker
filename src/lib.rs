@@ -42,11 +42,11 @@ mod tests {
                     fixture_name: "sample_list".to_owned(),
                 },
                 AnalysisError::MissingArgumentType {
-                    test_case_name: "test_hello_6".to_owned(),
+                    function_name: "test_hello_6".to_owned(),
                     argument_name: "sample_nested_list".to_owned(),
                 },
                 AnalysisError::MissingArgumentType {
-                    test_case_name: "test_hello_3".to_owned(),
+                    function_name: "test_hello_3".to_owned(),
                     argument_name: "sample_list".to_owned(),
                 },
             ],
@@ -55,21 +55,21 @@ mod tests {
                     fixture_name: "sample_missing_return_type".to_owned(),
                 },
                 AnalysisError::MissingArgumentType {
-                    test_case_name: "test_hello".to_owned(),
+                    function_name: "test_hello".to_owned(),
                     argument_name: "sample_string_2".to_owned(),
                 },
                 AnalysisError::MissingArgumentType {
-                    test_case_name: "sample_string_2".to_owned(),
+                    function_name: "sample_string_2".to_owned(),
                     argument_name: "sample_string".to_owned(),
                 },
                 AnalysisError::IncorrectArgumentType {
-                    test_case_name: "sample_string_3".to_owned(),
+                    function_name: "sample_string_3".to_owned(),
                     argument_name: "sample_string".to_owned(),
                     expected_type: "str".to_owned(),
                     provided_type: "int".to_owned(),
                 },
                 AnalysisError::IncorrectArgumentType {
-                    test_case_name: "test_hello".to_owned(),
+                    function_name: "test_hello".to_owned(),
                     argument_name: "sample_string".to_owned(),
                     expected_type: "str".to_owned(),
                     provided_type: "int".to_owned(),

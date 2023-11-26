@@ -79,7 +79,7 @@ pub fn check_function_arguments(
                         if let Some(fixture_annotation) = get_return_annotation(fixture) {
                             if fixture_annotation != arg_annotation {
                                 errors.push(AnalysisError::IncorrectArgumentType {
-                                    test_case_name: function_name.to_string(),
+                                    function_name: function_name.to_string(),
                                     argument_name: arg_name,
                                     expected_type: fixture_annotation,
                                     provided_type: arg_annotation,
@@ -88,13 +88,13 @@ pub fn check_function_arguments(
                         }
                     }
                     None => errors.push(AnalysisError::FixtureDoesNotExist {
-                        test_case_name: function_name.to_string(),
+                        function_name: function_name.to_string(),
                         argument_name: arg_name,
                     }),
                 }
             }
             None => errors.push(AnalysisError::MissingArgumentType {
-                test_case_name: function_name.to_string(),
+                function_name: function_name.to_string(),
                 argument_name: arg_name,
             }),
         }
