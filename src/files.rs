@@ -1,7 +1,7 @@
 use crate::analysis_error::AnalysisError;
 use parsed_python_file::ParsedPythonFile;
 use python_file::PythonFile;
-use rustpython_ast::{ArgWithDefault, Expr};
+use rustpython_ast::{ArgWithDefault, StmtFunctionDef};
 use std::{fs, path::PathBuf};
 pub mod parsed_python_file;
 pub mod python_file;
@@ -52,24 +52,21 @@ pub fn get_argument_annotation(arg: &ArgWithDefault) -> Option<String> {
     Some(arg.def.annotation.clone()?.as_name_expr()?.id.to_string())
 }
 
-pub fn get_return_annotation(arg: &Expr) -> Option<String> {
-    Some(arg.as_name_expr()?.id.to_string())
+pub fn get_return_annotation(func: &StmtFunctionDef) -> Option<String> {
+    match &func.returns {
+        Some(returns) => Some(returns.as_name_expr()?.id.to_string()),
+        None => None,
+    }
 }
 
 pub fn check_file(file: &ParsedPythonFile) -> Vec<AnalysisError> {
     let mut errors = Vec::new();
 
     for (fixture_name, func) in file.fixtures.iter() {
-        let annotation = match &func.returns {
-            Some(returns) => get_return_annotation(returns),
-            None => None,
-        };
-
-        match annotation {
-            Some(_v) => {}
-            None => errors.push(AnalysisError::FixtureMissingReturnType {
+        if get_return_annotation(func).is_none() {
+            errors.push(AnalysisError::FixtureMissingReturnType {
                 fixture_name: fixture_name.clone(),
-            }),
+            })
         }
     }
 
@@ -83,16 +80,14 @@ pub fn check_file(file: &ParsedPythonFile) -> Vec<AnalysisError> {
                     let fixture = file.fixtures.get(&arg_name);
                     match fixture {
                         Some(fixture) => {
-                            if let Some(returns) = &fixture.returns {
-                                if let Some(fixture_annotation) = get_return_annotation(returns) {
-                                    if fixture_annotation != arg_annotation {
-                                        errors.push(AnalysisError::IncorrectArgumentType {
-                                            test_case_name: test_case_name.clone(),
-                                            argument_name: arg_name,
-                                            expected_type: fixture_annotation,
-                                            provided_type: arg_annotation,
-                                        })
-                                    }
+                            if let Some(fixture_annotation) = get_return_annotation(fixture) {
+                                if fixture_annotation != arg_annotation {
+                                    errors.push(AnalysisError::IncorrectArgumentType {
+                                        test_case_name: test_case_name.clone(),
+                                        argument_name: arg_name,
+                                        expected_type: fixture_annotation,
+                                        provided_type: arg_annotation,
+                                    })
                                 }
                             }
                         }
