@@ -4,7 +4,7 @@ use rustpython_ast::{Stmt, StmtFunctionDef};
 
 use crate::nodes::FunctionUtil;
 
-pub fn get_functions(stmts: &Vec<Stmt>) -> Vec<StmtFunctionDef> {
+pub fn get_functions(stmts: &[Stmt]) -> Vec<StmtFunctionDef> {
     stmts
         .iter()
         .filter_map(|s| match s {
@@ -14,7 +14,7 @@ pub fn get_functions(stmts: &Vec<Stmt>) -> Vec<StmtFunctionDef> {
         .collect()
 }
 
-pub fn get_fixtures_mapping(functions: &Vec<StmtFunctionDef>) -> HashMap<String, StmtFunctionDef> {
+pub fn get_fixtures_mapping(functions: &[StmtFunctionDef]) -> HashMap<String, StmtFunctionDef> {
     let mut mapping = HashMap::new();
 
     for f in functions {

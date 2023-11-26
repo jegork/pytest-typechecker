@@ -9,8 +9,8 @@ use crate::files::{
     read_file,
 };
 
-pub fn check_and_parse_file(file: Vec<PathBuf>, recursive: bool) -> Vec<ParsedPythonFile> {
-    get_files_list(file, recursive)
+pub fn check_and_parse_file(file: &[PathBuf], recursive: bool) -> Vec<ParsedPythonFile> {
+    get_files_list(file.to_vec(), recursive)
         .iter()
         .map(read_file)
         .map(PythonFile::parse)
@@ -75,7 +75,7 @@ mod tests {
     #[test_case( "./python-examples/folder/test_empty.py" ; "for ./python-examples/folder/test_empty.py")]
     fn assert_check_file(filepath: &str) {
         let path = PathBuf::from(filepath);
-        let files = check_and_parse_file(vec![path], false);
+        let files = check_and_parse_file(&[path], false);
         let expected_value = get_errors_for_file(filepath);
 
         let provided_set: HashSet<&AnalysisError> = HashSet::from_iter(files[0].errors.iter());

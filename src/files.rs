@@ -33,8 +33,8 @@ pub fn read_file(file: &PathBuf) -> PythonFile {
 pub fn get_files_list(provided: Vec<PathBuf>, recursive: bool) -> Vec<PathBuf> {
     provided
         .into_iter()
-        .map(|p| {
-            if p.exists() == false {
+        .flat_map(|p| {
+            if !p.exists() {
                 let filename = p.file_name().unwrap().to_str().unwrap();
                 panic!("File {} does not exists.", filename)
             } else if recursive && p.is_dir() {
@@ -45,12 +45,11 @@ pub fn get_files_list(provided: Vec<PathBuf>, recursive: bool) -> Vec<PathBuf> {
                 [].to_vec()
             }
         })
-        .flatten()
         .collect()
 }
 
 pub fn get_argument_annotation(arg: &ArgWithDefault) -> Option<String> {
-    return Some(arg.def.annotation.clone()?.as_name_expr()?.id.to_string());
+    Some(arg.def.annotation.clone()?.as_name_expr()?.id.to_string())
 }
 
 pub fn get_return_annotation(arg: &Expr) -> Option<String> {
@@ -85,7 +84,7 @@ pub fn check_file(file: &ParsedPythonFile) -> Vec<AnalysisError> {
                     match fixture {
                         Some(fixture) => {
                             if let Some(returns) = &fixture.returns {
-                                if let Some(fixture_annotation) = get_return_annotation(&returns) {
+                                if let Some(fixture_annotation) = get_return_annotation(returns) {
                                     if fixture_annotation != arg_annotation {
                                         errors.push(AnalysisError::IncorrectArgumentType {
                                             test_case_name: test_case_name.clone(),

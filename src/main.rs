@@ -22,7 +22,7 @@ struct Args {
 fn main() -> Result<()> {
     let args = Args::parse();
 
-    let files = check_and_parse_file(args.file, args.recursive);
+    let files = check_and_parse_file(&args.file, args.recursive);
     for file in files {
         println!("File: {}", &file.file.filename);
         println!("Errors: {:#?}", file.errors);
