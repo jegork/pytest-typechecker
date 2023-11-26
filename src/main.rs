@@ -24,7 +24,7 @@ fn main() -> Result<()> {
 
     let files = check_and_parse_file(&args.file, args.recursive);
     for file in files {
-        println!("{}", file);
+        print!("{}", file);
     }
 
     Ok(())

@@ -1,3 +1,4 @@
+use colored::*;
 use std::fmt::Display;
 
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -30,11 +31,12 @@ impl Display for AnalysisError {
                 argument_name,
             } => write!(
                 f,
-                "[FIXTURE_DOES_NOT_EXIST] Fixture {} used in function {} does not exist.",
+                "{} Fixture {} used in function {} does not exist.",
+                "[FIXTURE_DOES_NOT_EXIST]".red(),
                 argument_name, function_name
             ),
             AnalysisError::FixtureMissingReturnType { fixture_name } => {
-                write!(f, "[FIXTURE_MISSING_RETURN_TYPE] Fixture {} missing return type.", fixture_name)
+                write!(f, "{} Fixture {} missing return type.", "[FIXTURE_MISSING_RETURN_TYPE]".red(), fixture_name)
             }
             AnalysisError::IncorrectArgumentType {
                 function_name,
@@ -43,14 +45,15 @@ impl Display for AnalysisError {
                 provided_type,
             } => write!(
                 f,
-                "[INCORRECT_ARGUMENT_TYPE] Function's {} argument {} receives a fixture of type {}, but specified type is {}. ",
+                "{} Function's {} argument {} receives a fixture of type {}, but specified type is {}.",
+                "[INCORRECT_ARGUMENT_TYPE]".red(),
                 function_name, argument_name, expected_type, provided_type
             ),
             AnalysisError::MissingArgumentType {
                 function_name,
                 argument_name,
-            } => write!(f, "[MISSING_ARGUMENT_TYPE] Function {} has no type specified for argument {}.", function_name, argument_name),
-            AnalysisError::UnparsableFile => write!(f, "Impossible to parse file's AST."),
+            } => write!(f, "{} Function {} has no type specified for argument {}.", "[MISSING_ARGUMENT_TYPE]".red(), function_name, argument_name),
+            AnalysisError::UnparsableFile => write!(f, "{} Impossible to parse file's AST.", "[UNPARSABLE_FILE]".red()),
         }
     }
 }
