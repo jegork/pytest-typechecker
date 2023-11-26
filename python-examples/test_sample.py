@@ -12,6 +12,11 @@ def sample_string_2(sample_string) -> str:
 
 
 @pytest.fixture()
+def sample_string_3(sample_string: int) -> str:
+    return sample_string + ' world'
+
+
+@pytest.fixture()
 def sample_missing_return_type():
     return 1
 
