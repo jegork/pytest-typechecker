@@ -16,6 +16,7 @@ anyhow = "1.0.72"
 bytecount = "0.6.3"
 clap = { version = "4.3.12", features = ["derive"] }
 colored = "2.0.4"
+indicatif = "0.17.7"
 prettytable-rs = "0.10.0"
 rustpython-ast = "0.3.0"
 rustpython-format = "0.3.0"

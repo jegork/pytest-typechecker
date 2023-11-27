@@ -5,13 +5,14 @@ pub mod nodes;
 use std::path::PathBuf;
 
 use crate::files::{
-    check_file, get_files_list, parsed_python_file::ParsedPythonFile, python_file::PythonFile,
-    read_file,
+    check_file, parsed_python_file::ParsedPythonFile, python_file::PythonFile, read_file,
 };
 
-pub fn check_and_parse_file(file: &[PathBuf], recursive: bool) -> Vec<ParsedPythonFile> {
-    get_files_list(file.to_vec(), recursive)
-        .iter()
+pub fn check_and_parse_file<'a, I: Iterator>(files: I) -> Vec<ParsedPythonFile>
+where
+    I: Iterator<Item = &'a PathBuf>,
+{
+    files
         .map(read_file)
         .map(PythonFile::parse)
         .map(|f| {
@@ -85,7 +86,7 @@ mod tests {
     #[test_case( "./python-examples/folder/test_empty.py" ; "for ./python-examples/folder/test_empty.py")]
     fn assert_check_file(filepath: &str) {
         let path = PathBuf::from(filepath);
-        let files = check_and_parse_file(&[path], false);
+        let files = check_and_parse_file([path].iter());
         let expected_value = get_errors_for_file(filepath);
 
         let provided_set: HashSet<&AnalysisError> = HashSet::from_iter(files[0].errors.iter());
