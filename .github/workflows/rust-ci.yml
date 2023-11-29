@@ -37,7 +37,7 @@ jobs:
             - name:
               run: |
                 echo "Version ${{steps.version_check_staging.outputs.releaseVersion}}"
-            - uses: actions-ecosystem/action-push-tag@v1
+            - uses: thejeff77/action-push-tag@v1.0.0
               with:
                 tag: ${{ steps.version_check_staging.outputs.releaseVersion }}
               if: github.event_name == 'push'

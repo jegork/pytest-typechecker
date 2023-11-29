@@ -1,7 +1,8 @@
 [package]
 name = "pytest_typechecker"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2021"
+exclude = ["/.github", "/python-examples"]
 
 [[bin]]
 name = "pytest_typechecker"
