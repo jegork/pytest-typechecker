@@ -59,8 +59,13 @@ mod tests {
 
     use super::*;
 
-    fn generate_test_directory() -> anyhow::Result<TempDir> {
+    fn generate_test_directory(is_empty: bool) -> anyhow::Result<TempDir> {
         let temp_dir = tempdir()?;
+
+        if is_empty {
+            return Ok(temp_dir);
+        }
+
         File::create(temp_dir.path().join("python_file1.py"))?;
         File::create(temp_dir.path().join("python_file2.py"))?;
 
@@ -85,7 +90,7 @@ mod tests {
 
     #[test]
     fn assert_files_list_only_files() -> anyhow::Result<()> {
-        let base_dir: PathBuf = generate_test_directory()?.into_path();
+        let base_dir: PathBuf = generate_test_directory(false)?.into_path();
 
         let files = vec![
             base_dir.join("python_file1.py"),
@@ -105,7 +110,7 @@ mod tests {
 
     #[test]
     fn assert_files_list() -> anyhow::Result<()> {
-        let base_dir: PathBuf = generate_test_directory()?.into_path();
+        let base_dir: PathBuf = generate_test_directory(false)?.into_path();
 
         let output: Vec<PathBuf> = get_files_list(&[base_dir.clone()], false).unwrap();
         let filenames: HashSet<String> = output.iter().map(|p| get_str_from_path(p)).collect();
@@ -125,7 +130,7 @@ mod tests {
 
     #[test]
     fn assert_files_list_recursive() -> anyhow::Result<()> {
-        let base_dir: PathBuf = generate_test_directory()?.into_path();
+        let base_dir: PathBuf = generate_test_directory(false)?.into_path();
 
         let output: Vec<PathBuf> = get_files_list(&[base_dir.clone()], true).unwrap();
         let filenames: HashSet<String> = output.iter().map(|p| get_str_from_path(p)).collect();
@@ -144,6 +149,17 @@ mod tests {
         .collect();
 
         assert_eq!(filenames, expected_filenames);
+
+        Ok(())
+    }
+
+    #[test]
+    fn assert_files_empty_dir() -> anyhow::Result<()> {
+        let base_dir: PathBuf = generate_test_directory(true)?.into_path();
+
+        let output: Vec<PathBuf> = get_files_list(&[base_dir], false).unwrap();
+
+        assert_eq!(output.len(), 0);
 
         Ok(())
     }
