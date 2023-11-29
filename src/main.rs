@@ -37,10 +37,10 @@ fn get_progress_bar(total_len: u64) -> ProgressBar {
     pb
 }
 
-fn main() -> Result<()> {
+fn main() -> Result<(), String> {
     let args = Args::parse();
 
-    let files = get_files_list(args.file, args.recursive);
+    let files = get_files_list(args.file, args.recursive)?;
 
     let pb = get_progress_bar(files.len() as u64);
     for file in check_and_parse_file(files.iter().progress_with(pb)) {
