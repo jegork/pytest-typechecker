@@ -49,26 +49,45 @@ pub fn get_files_list(provided: Vec<PathBuf>, recursive: bool) -> Vec<PathBuf> {
 #[cfg(test)]
 mod tests {
 
-    use std::collections::HashSet;
+    use std::{collections::HashSet, fs::File, path::Path};
+
+    use tempfile::{tempdir, TempDir};
 
     use super::*;
 
-    #[test]
-    fn assert_files_list() {
-        let base_dir = PathBuf::from("./python-examples");
-        let output = get_files_list(vec![base_dir], true);
-        let filenames: HashSet<&str> = output
-            .iter()
-            .map(|p| p.as_os_str().to_str().unwrap())
-            .collect();
+    fn generate_test_directory() -> anyhow::Result<TempDir> {
+        let temp_dir = tempdir()?;
+        File::create(temp_dir.path().join("python_file1.py"))?;
+        File::create(temp_dir.path().join("python_file2.py"))?;
 
-        assert_eq!(
-            filenames,
-            HashSet::from([
-                "./python-examples/test_sample.py",
-                "./python-examples/folder/test_empty.py",
-                "./python-examples/test_sample_complex.py",
-            ])
-        )
+        fs::create_dir(temp_dir.path().join("subfolder"))?;
+        File::create(temp_dir.path().join("subfolder").join("python_file3.py"))?;
+
+        Ok(temp_dir)
+    }
+
+    fn get_str_from_path(pathbuf: &Path) -> String {
+        pathbuf.to_str().unwrap().to_owned()
+    }
+
+    #[test]
+    fn assert_files_list() -> anyhow::Result<()> {
+        let base_dir: PathBuf = generate_test_directory()?.into_path();
+
+        let output: Vec<PathBuf> = get_files_list(vec![base_dir.clone()], true);
+        let filenames: HashSet<String> = output.iter().map(|p| get_str_from_path(p)).collect();
+
+        let expected_filenames: HashSet<String> = vec![
+            &base_dir.join("python_file1.py"),
+            &base_dir.join("python_file2.py"),
+            &base_dir.join("subfolder").join("python_file3.py"),
+        ]
+        .iter()
+        .map(|p| get_str_from_path(p))
+        .collect();
+
+        assert_eq!(filenames, expected_filenames);
+
+        Ok(())
     }
 }
