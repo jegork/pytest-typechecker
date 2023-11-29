@@ -3,16 +3,7 @@ use std::{fs, path::PathBuf};
 use python_file::PythonFile;
 pub mod parsed_python_file;
 pub mod python_file;
-
-fn get_files_in_a_directory(dir: PathBuf) -> Vec<PathBuf> {
-    let mut files = Vec::new();
-
-    for entry in dir.read_dir().unwrap() {
-        files.push(entry.unwrap().path())
-    }
-
-    files
-}
+use glob::glob;
 
 pub fn read_file(file: &PathBuf) -> PythonFile {
     let filename = file
@@ -31,17 +22,28 @@ pub fn read_file(file: &PathBuf) -> PythonFile {
 pub fn get_files_list(provided: Vec<PathBuf>, recursive: bool) -> Vec<PathBuf> {
     provided
         .into_iter()
-        .flat_map(|p| {
-            if !p.exists() {
-                let filename = p.file_name().unwrap().to_str().unwrap();
-                panic!("File {} does not exists.", filename)
-            } else if recursive && p.is_dir() {
-                get_files_list(get_files_in_a_directory(p), recursive)
-            } else if p.is_file() {
-                vec![p]
+        .flat_map(|v| {
+            if v.is_dir() {
+                let pattern = if recursive {
+                    v.join("**").join("*.py")
+                } else {
+                    v.join("*.py")
+                };
+
+                let pattern = pattern.to_str().unwrap().to_string();
+
+                let files = glob(&pattern).unwrap();
+                let out: Vec<PathBuf> = files.filter_map(|f| f.ok()).collect();
+                out
             } else {
-                [].to_vec()
+                vec![v]
             }
+        })
+        .filter(|f| {
+            if !f.exists() {
+                panic!("File {} does not exist.", f.to_str().unwrap())
+            }
+            true
         })
         .collect()
 }
@@ -63,6 +65,15 @@ mod tests {
         fs::create_dir(temp_dir.path().join("subfolder"))?;
         File::create(temp_dir.path().join("subfolder").join("python_file3.py"))?;
 
+        fs::create_dir(temp_dir.path().join("subfolder").join("subsubfolder"))?;
+        File::create(
+            temp_dir
+                .path()
+                .join("subfolder")
+                .join("subsubfolder")
+                .join("python_file4.py"),
+        )?;
+
         Ok(temp_dir)
     }
 
@@ -74,6 +85,26 @@ mod tests {
     fn assert_files_list() -> anyhow::Result<()> {
         let base_dir: PathBuf = generate_test_directory()?.into_path();
 
+        let output: Vec<PathBuf> = get_files_list(vec![base_dir.clone()], false);
+        let filenames: HashSet<String> = output.iter().map(|p| get_str_from_path(p)).collect();
+
+        let expected_filenames: HashSet<String> = vec![
+            &base_dir.join("python_file1.py"),
+            &base_dir.join("python_file2.py"),
+        ]
+        .iter()
+        .map(|p| get_str_from_path(p))
+        .collect();
+
+        assert_eq!(filenames, expected_filenames);
+
+        Ok(())
+    }
+
+    #[test]
+    fn assert_files_list_recursive() -> anyhow::Result<()> {
+        let base_dir: PathBuf = generate_test_directory()?.into_path();
+
         let output: Vec<PathBuf> = get_files_list(vec![base_dir.clone()], true);
         let filenames: HashSet<String> = output.iter().map(|p| get_str_from_path(p)).collect();
 
@@ -81,6 +112,10 @@ mod tests {
             &base_dir.join("python_file1.py"),
             &base_dir.join("python_file2.py"),
             &base_dir.join("subfolder").join("python_file3.py"),
+            &base_dir
+                .join("subfolder")
+                .join("subsubfolder")
+                .join("python_file4.py"),
         ]
         .iter()
         .map(|p| get_str_from_path(p))
