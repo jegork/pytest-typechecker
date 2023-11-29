@@ -19,9 +19,9 @@ pub fn read_file(file: &PathBuf) -> PythonFile {
     PythonFile { content, filename }
 }
 
-pub fn get_files_list(provided: Vec<PathBuf>, recursive: bool) -> Result<Vec<PathBuf>, String> {
+pub fn get_files_list(provided: &[PathBuf], recursive: bool) -> Result<Vec<PathBuf>, String> {
     provided
-        .into_iter()
+        .iter()
         .flat_map(|v| {
             if v.is_dir() {
                 let pattern = if recursive {
@@ -32,9 +32,12 @@ pub fn get_files_list(provided: Vec<PathBuf>, recursive: bool) -> Result<Vec<Pat
 
                 let pattern = pattern.to_str().unwrap().to_string();
 
-                glob(&pattern).unwrap().filter_map(|f| f.ok()).collect()
+                glob(&pattern)
+                    .expect("Incorrect glob")
+                    .filter_map(|f| f.ok())
+                    .collect()
             } else {
-                vec![v]
+                vec![v.clone()]
             }
         })
         .map(|f| {
@@ -89,7 +92,7 @@ mod tests {
             base_dir.join("python_file2.py"),
         ];
 
-        let output: Vec<PathBuf> = get_files_list(files.clone(), false).unwrap();
+        let output: Vec<PathBuf> = get_files_list(&files, false).unwrap();
         let filenames: HashSet<String> = output.iter().map(|p| get_str_from_path(p)).collect();
 
         let expected_filenames: HashSet<String> =
@@ -104,7 +107,7 @@ mod tests {
     fn assert_files_list() -> anyhow::Result<()> {
         let base_dir: PathBuf = generate_test_directory()?.into_path();
 
-        let output: Vec<PathBuf> = get_files_list(vec![base_dir.clone()], false).unwrap();
+        let output: Vec<PathBuf> = get_files_list(&[base_dir.clone()], false).unwrap();
         let filenames: HashSet<String> = output.iter().map(|p| get_str_from_path(p)).collect();
 
         let expected_filenames: HashSet<String> = vec![
@@ -124,7 +127,7 @@ mod tests {
     fn assert_files_list_recursive() -> anyhow::Result<()> {
         let base_dir: PathBuf = generate_test_directory()?.into_path();
 
-        let output: Vec<PathBuf> = get_files_list(vec![base_dir.clone()], true).unwrap();
+        let output: Vec<PathBuf> = get_files_list(&[base_dir.clone()], true).unwrap();
         let filenames: HashSet<String> = output.iter().map(|p| get_str_from_path(p)).collect();
 
         let expected_filenames: HashSet<String> = vec![
