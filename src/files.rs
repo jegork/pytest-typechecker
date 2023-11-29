@@ -124,24 +124,26 @@ pub fn check_file(file: &ParsedPythonFile) -> Vec<AnalysisError> {
 #[cfg(test)]
 mod tests {
 
+    use std::collections::HashSet;
+
     use super::*;
 
     #[test]
     fn assert_files_list() {
         let base_dir = PathBuf::from("./python-examples");
         let output = get_files_list(vec![base_dir], true);
-        let filenames: Vec<&str> = output
+        let filenames: HashSet<&str> = output
             .iter()
             .map(|p| p.as_os_str().to_str().unwrap())
             .collect();
 
         assert_eq!(
             filenames,
-            vec![
+            HashSet::from([
                 "./python-examples/test_sample.py",
                 "./python-examples/folder/test_empty.py",
                 "./python-examples/test_sample_complex.py",
-            ]
+            ])
         )
     }
 }
