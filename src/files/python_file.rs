@@ -1,8 +1,8 @@
 use crate::analysis_error::AnalysisError;
+use crate::files::parsed_python_file::ParsedPythonFile;
 use crate::functions::{get_fixtures_mapping, get_functions, get_test_cases};
 use rustpython_parser_core::Mode;
 use std::collections::HashMap;
-use crate::files::parsed_python_file::ParsedPythonFile;
 
 #[derive(Debug)]
 pub struct PythonFile {
