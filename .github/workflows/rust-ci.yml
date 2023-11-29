@@ -25,3 +25,16 @@ jobs:
               run: cargo clippy --verbose -- -D warnings
             - name: Audit
               run: cargo audit
+
+            - run: git fetch --all --tags
+            - name: Check Release Version
+              uses: thebongy/version-check@v2
+              with:
+                file: Cargo.toml 
+              id: version_check_staging
+            - name:
+              run: |
+                echo "Version ${{steps.version_check_staging.outputs.releaseVersion}}"
+            - uses: actions-ecosystem/action-push-tag@v1
+              with:
+                tag: ${{ steps.version_check_staging.outputs.releaseVersion }}
