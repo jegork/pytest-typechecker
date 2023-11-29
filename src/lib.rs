@@ -1,12 +1,13 @@
 pub mod analysis_error;
+pub mod check;
 pub mod files;
 pub mod functions;
 pub mod nodes;
 use std::path::PathBuf;
 
-use crate::files::{
-    check_file, parsed_python_file::ParsedPythonFile, python_file::PythonFile, read_file,
-};
+use check::check_file;
+
+use crate::files::{parsed_python_file::ParsedPythonFile, python_file::PythonFile, read_file};
 
 pub fn check_and_parse_file<'a, I: Iterator>(files: I) -> Vec<ParsedPythonFile>
 where

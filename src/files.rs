@@ -1,20 +1,9 @@
-use crate::analysis_error::AnalysisError;
-use parsed_python_file::ParsedPythonFile;
+use std::{fs, path::PathBuf};
+
 use python_file::PythonFile;
-use rustpython_ast::{ArgWithDefault, StmtFunctionDef};
-use std::{collections::HashMap, fs, path::PathBuf};
 pub mod parsed_python_file;
 pub mod python_file;
-
-fn get_files_in_a_directory(dir: PathBuf) -> Vec<PathBuf> {
-    let mut files = Vec::new();
-
-    for entry in dir.read_dir().unwrap() {
-        files.push(entry.unwrap().path())
-    }
-
-    files
-}
+use glob::glob;
 
 pub fn read_file(file: &PathBuf) -> PythonFile {
     let filename = file
@@ -33,117 +22,107 @@ pub fn read_file(file: &PathBuf) -> PythonFile {
 pub fn get_files_list(provided: Vec<PathBuf>, recursive: bool) -> Vec<PathBuf> {
     provided
         .into_iter()
-        .flat_map(|p| {
-            if !p.exists() {
-                let filename = p.file_name().unwrap().to_str().unwrap();
-                panic!("File {} does not exists.", filename)
-            } else if recursive && p.is_dir() {
-                get_files_list(get_files_in_a_directory(p), recursive)
-            } else if p.is_file() {
-                vec![p]
+        .flat_map(|v| {
+            if v.is_dir() {
+                let pattern = if recursive {
+                    v.join("**").join("*.py")
+                } else {
+                    v.join("*.py")
+                };
+
+                let pattern = pattern.to_str().unwrap().to_string();
+
+                let files = glob(&pattern).unwrap();
+                let out: Vec<PathBuf> = files.filter_map(|f| f.ok()).collect();
+                out
             } else {
-                [].to_vec()
+                vec![v]
             }
         })
-        .collect()
-}
-
-pub fn get_argument_annotation(arg: &ArgWithDefault) -> Option<String> {
-    Some(arg.def.annotation.clone()?.as_name_expr()?.id.to_string())
-}
-
-pub fn get_return_annotation(func: &StmtFunctionDef) -> Option<String> {
-    match &func.returns {
-        Some(returns) => Some(returns.as_name_expr()?.id.to_string()),
-        None => None,
-    }
-}
-
-pub fn check_function_arguments(
-    func: &StmtFunctionDef,
-    fixtures: &HashMap<String, StmtFunctionDef>,
-) -> Vec<AnalysisError> {
-    let function_name = &func.name;
-
-    let mut errors: Vec<AnalysisError> = Vec::new();
-
-    for arg in func.args.args.iter() {
-        let arg_name = arg.def.arg.to_string();
-        let arg_annotation = get_argument_annotation(arg);
-
-        match arg_annotation {
-            Some(arg_annotation) => {
-                let fixture = fixtures.get(&arg_name);
-                match fixture {
-                    Some(fixture) => {
-                        if let Some(fixture_annotation) = get_return_annotation(fixture) {
-                            if fixture_annotation != arg_annotation {
-                                errors.push(AnalysisError::IncorrectArgumentType {
-                                    function_name: function_name.to_string(),
-                                    argument_name: arg_name,
-                                    expected_type: fixture_annotation,
-                                    provided_type: arg_annotation,
-                                })
-                            }
-                        }
-                    }
-                    None => errors.push(AnalysisError::FixtureDoesNotExist {
-                        function_name: function_name.to_string(),
-                        argument_name: arg_name,
-                    }),
-                }
+        .filter(|f| {
+            if !f.exists() {
+                panic!("File {} does not exist.", f.to_str().unwrap())
             }
-            None => errors.push(AnalysisError::MissingArgumentType {
-                function_name: function_name.to_string(),
-                argument_name: arg_name,
-            }),
-        }
-    }
-    errors
-}
-
-pub fn check_file(file: &ParsedPythonFile) -> Vec<AnalysisError> {
-    let mut errors = Vec::new();
-
-    for (fixture_name, func) in file.fixtures.iter() {
-        if get_return_annotation(func).is_none() {
-            errors.push(AnalysisError::FixtureMissingReturnType {
-                fixture_name: fixture_name.clone(),
-            })
-        }
-        errors.extend(check_function_arguments(func, &file.fixtures))
-    }
-
-    for (_test_case_name, func) in file.test_cases.iter() {
-        errors.extend(check_function_arguments(func, &file.fixtures))
-    }
-
-    errors
+            true
+        })
+        .collect()
 }
 
 #[cfg(test)]
 mod tests {
 
-    use std::collections::HashSet;
+    use std::{collections::HashSet, fs::File, path::Path};
+
+    use tempfile::{tempdir, TempDir};
 
     use super::*;
 
-    #[test]
-    fn assert_files_list() {
-        let base_dir = PathBuf::from("./python-examples");
-        let output = get_files_list(vec![base_dir], true);
-        let filenames: HashSet<&str> = output
-            .iter()
-            .map(|p| p.as_os_str().to_str().unwrap())
-            .collect();
+    fn generate_test_directory() -> anyhow::Result<TempDir> {
+        let temp_dir = tempdir()?;
+        File::create(temp_dir.path().join("python_file1.py"))?;
+        File::create(temp_dir.path().join("python_file2.py"))?;
 
-        assert_eq!(
-            filenames,
-            HashSet::from([
-                "./python-examples/test_sample.py",
-                "./python-examples/folder/test_empty.py",
-                "./python-examples/test_sample_complex.py",
-            ])
-        )
+        fs::create_dir(temp_dir.path().join("subfolder"))?;
+        File::create(temp_dir.path().join("subfolder").join("python_file3.py"))?;
+
+        fs::create_dir(temp_dir.path().join("subfolder").join("subsubfolder"))?;
+        File::create(
+            temp_dir
+                .path()
+                .join("subfolder")
+                .join("subsubfolder")
+                .join("python_file4.py"),
+        )?;
+
+        Ok(temp_dir)
+    }
+
+    fn get_str_from_path(pathbuf: &Path) -> String {
+        pathbuf.to_str().unwrap().to_owned()
+    }
+
+    #[test]
+    fn assert_files_list() -> anyhow::Result<()> {
+        let base_dir: PathBuf = generate_test_directory()?.into_path();
+
+        let output: Vec<PathBuf> = get_files_list(vec![base_dir.clone()], false);
+        let filenames: HashSet<String> = output.iter().map(|p| get_str_from_path(p)).collect();
+
+        let expected_filenames: HashSet<String> = vec![
+            &base_dir.join("python_file1.py"),
+            &base_dir.join("python_file2.py"),
+        ]
+        .iter()
+        .map(|p| get_str_from_path(p))
+        .collect();
+
+        assert_eq!(filenames, expected_filenames);
+
+        Ok(())
+    }
+
+    #[test]
+    fn assert_files_list_recursive() -> anyhow::Result<()> {
+        let base_dir: PathBuf = generate_test_directory()?.into_path();
+
+        let output: Vec<PathBuf> = get_files_list(vec![base_dir.clone()], true);
+        let filenames: HashSet<String> = output.iter().map(|p| get_str_from_path(p)).collect();
+
+        let expected_filenames: HashSet<String> = vec![
+            &base_dir.join("python_file1.py"),
+            &base_dir.join("python_file2.py"),
+            &base_dir.join("subfolder").join("python_file3.py"),
+            &base_dir
+                .join("subfolder")
+                .join("subsubfolder")
+                .join("python_file4.py"),
+        ]
+        .iter()
+        .map(|p| get_str_from_path(p))
+        .collect();
+
+        assert_eq!(filenames, expected_filenames);
+
+        Ok(())
     }
 }

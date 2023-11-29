@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use rustpython_ast::{Stmt, StmtFunctionDef};
+use rustpython_ast::{ArgWithDefault, Stmt, StmtFunctionDef};
 
 use crate::nodes::FunctionUtil;
 
@@ -38,4 +38,15 @@ pub fn get_test_cases(functions: &Vec<StmtFunctionDef>) -> HashMap<String, StmtF
     }
 
     mapping
+}
+
+pub fn get_argument_annotation(arg: &ArgWithDefault) -> Option<String> {
+    Some(arg.def.annotation.clone()?.as_name_expr()?.id.to_string())
+}
+
+pub fn get_return_annotation(func: &StmtFunctionDef) -> Option<String> {
+    match &func.returns {
+        Some(returns) => Some(returns.as_name_expr()?.id.to_string()),
+        None => None,
+    }
 }
