@@ -81,6 +81,26 @@ mod tests {
     }
 
     #[test]
+    fn assert_files_list_only_files() -> anyhow::Result<()> {
+        let base_dir: PathBuf = generate_test_directory()?.into_path();
+
+        let files = vec![
+            base_dir.join("python_file1.py"),
+            base_dir.join("python_file2.py"),
+        ];
+
+        let output: Vec<PathBuf> = get_files_list(files.clone(), false).unwrap();
+        let filenames: HashSet<String> = output.iter().map(|p| get_str_from_path(p)).collect();
+
+        let expected_filenames: HashSet<String> =
+            files.iter().map(|p| get_str_from_path(p)).collect();
+
+        assert_eq!(filenames, expected_filenames);
+
+        Ok(())
+    }
+
+    #[test]
     fn assert_files_list() -> anyhow::Result<()> {
         let base_dir: PathBuf = generate_test_directory()?.into_path();
 
