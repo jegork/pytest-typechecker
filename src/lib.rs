@@ -34,22 +34,17 @@ mod tests {
     fn get_errors_for_file(filepath: &str) -> Vec<AnalysisError> {
         match filepath {
             "./python-examples/test_sample_complex.py" => vec![
-                AnalysisError::FixtureMissingReturnType {
-                    fixture_name: "sample_nested_dict".to_owned(),
+                AnalysisError::IncorrectArgumentType {
+                    function_name: "test_hello_6".to_string(),
+                    argument_name: "sample_nested_list".to_string(),
+                    expected_type: "List[List[int]]".to_string(),
+                    provided_type: "List[List]".to_string(),
                 },
-                AnalysisError::FixtureMissingReturnType {
-                    fixture_name: "sample_nested_list".to_owned(),
-                },
-                AnalysisError::FixtureMissingReturnType {
-                    fixture_name: "sample_list".to_owned(),
-                },
-                AnalysisError::MissingArgumentType {
-                    function_name: "test_hello_6".to_owned(),
-                    argument_name: "sample_nested_list".to_owned(),
-                },
-                AnalysisError::MissingArgumentType {
-                    function_name: "test_hello_3".to_owned(),
-                    argument_name: "sample_list".to_owned(),
+                AnalysisError::IncorrectArgumentType {
+                    function_name: "test_hello_5".to_string(),
+                    argument_name: "sample_nested_dict".to_string(),
+                    expected_type: "List[List[Dict[int, str]]]".to_string(),
+                    provided_type: "Dict".to_string(),
                 },
             ],
             "./python-examples/test_sample.py" => vec![
