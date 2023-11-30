@@ -18,7 +18,7 @@ def sample_nested_list() -> List[List[int]]:
     return [[1, 1], [2, 1]]
 
 
-def test_hello_3(sample_list: List[str]):
+def test_hello_3(sample_list: List[int]):
     pass
 
 
