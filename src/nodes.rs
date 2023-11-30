@@ -30,3 +30,23 @@ impl FunctionUtil for StmtFunctionDef {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::FunctionUtil;
+    use crate::test_utils::{get_fixture, get_function};
+
+    #[test]
+    fn assert_pytest_fixture() {
+        let func = get_fixture("fixture", Vec::new(), None);
+
+        assert!(func.as_function_def_stmt().unwrap().is_pytest_fixture());
+    }
+
+    #[test]
+    fn assert_not_pytest_fixture() {
+        let func = get_function("fixture", Vec::new(), None, Vec::new());
+
+        assert!(!func.as_function_def_stmt().unwrap().is_pytest_fixture());
+    }
+}
