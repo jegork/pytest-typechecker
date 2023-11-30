@@ -96,3 +96,123 @@ mod tests {
         assert_eq!(provided_set, expected_set)
     }
 }
+
+#[cfg(test)]
+pub(crate) mod test_utils {
+
+    use rustpython_ast::{
+        Arg, ArgWithDefault, Arguments, EmptyRange, Expr, ExprAttribute, ExprCall, ExprContext,
+        ExprName, Identifier, Stmt, StmtFunctionDef, TextSize,
+    };
+    use rustpython_parser_vendored::text_size::TextRange;
+
+    pub fn get_mock_text_sizes() -> (TextSize, TextSize) {
+        (TextSize::new(0), TextSize::new(1))
+    }
+
+    pub fn get_mock_text_range() -> TextRange {
+        let (start, end) = get_mock_text_sizes();
+        TextRange::new(start, end)
+    }
+
+    pub fn get_mock_empty_range<T>() -> EmptyRange<T> {
+        let (start, end) = get_mock_text_sizes();
+        EmptyRange::new(start, end)
+    }
+
+    pub fn get_function_args(
+        arg: Identifier,
+        annotation: Option<Box<Expr<TextRange>>>,
+    ) -> ArgWithDefault<TextRange> {
+        ArgWithDefault {
+            range: get_mock_empty_range(),
+            def: Arg {
+                range: get_mock_text_range(),
+                arg,
+                annotation,
+                type_comment: None,
+            },
+            default: None,
+        }
+    }
+
+    pub fn get_function(
+        name: &str,
+        args: Vec<ArgWithDefault>,
+        returns: Option<Box<Expr>>,
+        decorator_list: Vec<Expr>,
+    ) -> Stmt {
+        Stmt::FunctionDef(StmtFunctionDef {
+            range: get_mock_text_range(),
+            name: Identifier::new(name),
+            args: Box::new(Arguments {
+                range: get_mock_empty_range(),
+                posonlyargs: Vec::new(),
+                args,
+                vararg: None,
+                kwonlyargs: Vec::new(),
+                kwarg: None,
+            }),
+            body: Vec::new(),
+            decorator_list,
+            returns,
+            type_comment: None,
+            type_params: Vec::new(),
+        })
+    }
+
+    pub fn get_test_case(
+        name: &str,
+        args: Vec<ArgWithDefault>,
+        returns: Option<Box<Expr>>,
+    ) -> Stmt {
+        get_function(name, args, returns, Vec::new())
+    }
+
+    pub fn get_fixture(name: &str, args: Vec<ArgWithDefault>, returns: Option<Box<Expr>>) -> Stmt {
+        let func = Box::new(Expr::Attribute(ExprAttribute {
+            range: get_mock_text_range(),
+            value: Box::new(Expr::Name(ExprName {
+                range: get_mock_text_range(),
+                id: Identifier::new("pytest"),
+                ctx: ExprContext::Load {},
+            })),
+            attr: Identifier::new("fixture"),
+            ctx: ExprContext::Load {},
+        }));
+
+        let fixture = Expr::Call(ExprCall {
+            range: get_mock_text_range(),
+            func,
+            args: Vec::new(),
+            keywords: Vec::new(),
+        });
+        get_function(name, args, returns, vec![fixture])
+    }
+
+    pub fn create_functions() -> Vec<Stmt> {
+        vec![
+            get_test_case(
+                "test_case_1",
+                vec![get_function_args(
+                    Identifier::new("fixture1"),
+                    Some(Box::new(Expr::Name(ExprName {
+                        range: get_mock_text_range(),
+                        id: Identifier::new("int"),
+                        ctx: ExprContext::Load {},
+                    }))),
+                )],
+                None,
+            ),
+            get_fixture(
+                "fixture_1",
+                Vec::new(),
+                Some(Box::new(Expr::Name(ExprName {
+                    range: get_mock_text_range(),
+                    id: Identifier::new("int"),
+                    ctx: ExprContext::Load {},
+                }))),
+            ),
+        ]
+    }
+}
