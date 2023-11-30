@@ -27,7 +27,7 @@ pub fn get_fixtures_mapping(functions: &[StmtFunctionDef]) -> HashMap<String, St
     mapping
 }
 
-pub fn get_test_cases(functions: &Vec<StmtFunctionDef>) -> HashMap<String, StmtFunctionDef> {
+pub fn get_test_cases(functions: &[StmtFunctionDef]) -> HashMap<String, StmtFunctionDef> {
     let mut mapping = HashMap::new();
 
     for f in functions {
