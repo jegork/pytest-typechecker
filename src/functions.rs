@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use rustpython_ast::{ArgWithDefault, Stmt, StmtFunctionDef};
+use rustpython_ast::{ArgWithDefault, Expr, ExprSubscript, Stmt, StmtFunctionDef};
 
 use crate::nodes::FunctionUtil;
 
@@ -40,15 +40,41 @@ pub fn get_test_cases(functions: &[StmtFunctionDef]) -> HashMap<String, StmtFunc
     mapping
 }
 
+fn unfold_subscript(expr: &ExprSubscript) -> Option<String> {
+    let value = expr.value.as_name_expr()?.id.to_string();
+
+    match *expr.slice {
+        Expr::Name(ref expr) => Some(format!("{}[{}]", value, expr.id)),
+        Expr::Subscript(ref expr) => {
+            Some(format!("{}[{}]", value, unfold_subscript(expr).unwrap()))
+        }
+        Expr::Tuple(ref expr) => {
+            let tuple: Vec<String> = expr
+                .elts
+                .iter()
+                .map(|v| v.as_name_expr().unwrap().id.to_string())
+                .collect();
+
+            Some(format!("{}[{}]", value, tuple.join(", ")))
+        }
+        _ => panic!("Incorrect type {:#?}", expr.slice),
+    }
+}
+
+pub fn get_annotation(expr: &Expr) -> Option<String> {
+    match expr {
+        Expr::Name(v) => Some(v.id.to_string()),
+        Expr::Subscript(v) => unfold_subscript(v),
+        _ => None,
+    }
+}
+
 pub fn get_argument_annotation(arg: &ArgWithDefault) -> Option<String> {
-    Some(arg.def.annotation.clone()?.as_name_expr()?.id.to_string())
+    get_annotation(arg.def.annotation.as_deref()?)
 }
 
 pub fn get_return_annotation(func: &StmtFunctionDef) -> Option<String> {
-    match &func.returns {
-        Some(returns) => Some(returns.as_name_expr()?.id.to_string()),
-        None => None,
-    }
+    get_annotation(func.returns.as_deref()?)
 }
 
 #[cfg(test)]
