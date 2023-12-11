@@ -115,7 +115,7 @@ mod tests {
         let output: Vec<PathBuf> = get_files_list(&[base_dir.clone()], false).unwrap();
         let filenames: HashSet<String> = output.iter().map(|p| get_str_from_path(p)).collect();
 
-        let expected_filenames: HashSet<String> = vec![
+        let expected_filenames: HashSet<String> = [
             &base_dir.join("python_file1.py"),
             &base_dir.join("python_file2.py"),
         ]
@@ -135,7 +135,7 @@ mod tests {
         let output: Vec<PathBuf> = get_files_list(&[base_dir.clone()], true).unwrap();
         let filenames: HashSet<String> = output.iter().map(|p| get_str_from_path(p)).collect();
 
-        let expected_filenames: HashSet<String> = vec![
+        let expected_filenames: HashSet<String> = [
             &base_dir.join("python_file1.py"),
             &base_dir.join("python_file2.py"),
             &base_dir.join("subfolder").join("python_file3.py"),
